@@ -26,7 +26,7 @@
 - (void)testExample {
     RandUniChar *randUniChar = [[RandUniChar alloc] init];
     for (NSUInteger i = 1; i < 50; i++) {
-        NSString *string = [randUniChar randomStringInJapnese:i];
+        NSString *string = [randUniChar randomStringInJapanese:i];
         NSLog(@"string = %@", string);
     }
 }

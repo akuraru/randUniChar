@@ -14,7 +14,7 @@ typedef struct {
     const unichar toChar;
 } CharMapping;
 
-- (NSString *)randomStringInJapnese:(NSUInteger) length {
+- (NSString *)randomStringInJapanese:(NSUInteger) length {
     NSArray *arrayRange = [self japaneseRangeArray];
     // FIXME: Doesn't actually random
     NSMutableString *results = [NSMutableString string];

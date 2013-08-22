@@ -10,5 +10,5 @@
 
 @interface RandUniChar : NSObject
 
-- (NSString *)randomStringInJapnese:(NSUInteger) length;
+- (NSString *)randomStringInJapanese:(NSUInteger) length;
 @end

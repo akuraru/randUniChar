@@ -1,15 +1,14 @@
 # RandUniChar
 
-
-- [ ] Write a project description
-
-## Installation
-
-- [ ] Describe the installation process
+Random(pseudo…) String Generator in Objective-C
 
 ## Usage
 
-- [ ] Write usage instructions
+``` objc
+    RandUniChar *randUniChar = [[RandUniChar alloc] init];
+    NSString *string = [randUniChar randomStringInJapanese:10];
+    // ァ㊘ワ勞ハ㉃㊟ゴ桤㊅
+```
 
 ## Contributing
 
