@@ -1,0 +1,8 @@
+//
+// Prefix header for all source files of the 'RandUniChar' target in the 'RandUniChar' project
+//
+
+#ifdef __OBJC__
+    #import <Foundation/Foundation.h>
+
+#endif
