@@ -10,8 +10,8 @@
 
 @implementation RandUniChar
 typedef struct {
-    const unichar fromChar;
-    const unichar toChar;
+    const UTF32Char fromChar;
+    const UTF32Char toChar;
 } CharMapping;
 
 - (NSString *)randomStringInJapanese:(NSUInteger) length {
@@ -46,7 +46,7 @@ typedef struct {
         {0x3280, 0x32B0},
         {0x3400, 0x9FFF},
         {0xF900, 0xFAFF},
-        {(unichar const)0x20000, (unichar const)0x2FFFF},// surrogate pair
+        {0x20000, 0x2FFFF},// surrogate pair
     };
     return [self arrayRangeForCharMapping:mapping_array size:sizeof(mapping_array) / sizeof(mapping_array[0])];
 }
@@ -79,7 +79,7 @@ typedef struct {
 }
 
 - (NSRange)rangeForCharMapping:(CharMapping) charMapping {
-    return [self rangeOfUniCharFrom:charMapping.fromChar toChar:charMapping.toChar];
+    return [self rangeOfUniCharFrom:(UniChar)charMapping.fromChar toChar:(UniChar)charMapping.toChar];
 }
 
 - (NSRange)rangeOfUniCharFrom:(UniChar) formChar toChar:(UniChar) toChar {
