@@ -8,89 +8,76 @@
 
 #import "RandUniChar.h"
 
-@implementation RandUniChar
+#define mSharedInstance + (instancetype)sharedInstance {\
+    static id _instance;\
+    static dispatch_once_t onceToken;\
+    dispatch_once(&onceToken, ^{\
+        _instance = [self new];\
+    });\
+    return _instance;\
+}
+#define cWordStringInheritance(name, from, to) @interface name : WordsString\
+@end\
+@implementation name \
+mSharedInstance\
+- (id)init {\
+    self = [super init];\
+    if (self) {\
+[self setRange:(CharMapping){from, to}];\
+}\
+return self;\
+}\
+@end
+
 typedef struct {
     const UTF32Char fromChar;
     const UTF32Char toChar;
 } CharMapping;
 
-- (NSString *)randomStringInJapanese:(NSUInteger) length {
-    NSArray *arrayRange = [self japaneseRangeArray];
-    // FIXME: Doesn't actually random
-    NSMutableString *results = [NSMutableString string];
-    for (NSUInteger i = 0; i < length; i++) {
-        NSRange pickupRange = [arrayRange[arc4random_uniform([arrayRange count])] rangeValue];
-        UniChar uniChar = [self randomUniCharFromRange:pickupRange];
-        [results appendString:[self stringFromUniChar:uniChar]];
-    }
-    return results;
+@interface RandString : NSObject {
+    NSUInteger length;
+}
+- (NSString *)nextString;
++ (instancetype)sharedInstance;
+- (NSUInteger)length;
+- (NSString *)stringFromIndex:(NSInteger)index;
+@end
+@implementation RandString
++ (instancetype)sharedInstance {
+    return nil;
+}
+- (NSString *)nextString {
+    return @"";
+}
+- (NSUInteger)length {
+    return length;
+}
+- (NSString *)stringFromIndex:(NSInteger)index {
+    return @"";
+}
+@end
+@interface WordsString :RandString {
+    NSUInteger location;
+}
+- (void)setRange:(CharMapping)charMapping;
+@end
+@implementation WordsString
+- (void)setRange:(CharMapping)charMapping {
+    location = charMapping.fromChar;
+    length = charMapping.toChar - charMapping.fromChar + 1;
+}
+- (NSRange)rangeValue {
+    return NSMakeRange(location, length);
+}
+- (NSString *)nextString {
+    return [self stringFromIndex:[self randomIndex]];
+}
+- (NSInteger)randomIndex {
+    return (arc4random_uniform(length));
 }
 
-- (NSArray *)japaneseRangeArray {
-    NSArray *arrayRanges = @[
-        [self kanjiRangeArray],
-        [self katakanaRangeArray],
-        [self hiraganaRangeArray]
-    ];
-    NSMutableArray *flattedArray = [NSMutableArray array];
-    for (NSArray *array in arrayRanges) {
-        [flattedArray addObjectsFromArray:array];
-    }
-    return flattedArray;
-}
-
-// http://tama-san.com/?p=196
-- (NSArray *)kanjiRangeArray {
-    CharMapping mapping_array[] = {
-        {0x3220, 0x3244},
-        {0x3280, 0x32B0},
-        {0x3400, 0x9FFF},
-        {0xF900, 0xFAFF},
-        {0x20000, 0x2FFFF},// surrogate pair
-    };
-    return [self arrayRangeForCharMapping:mapping_array size:sizeof(mapping_array) / sizeof(mapping_array[0])];
-}
-
-// https://sites.google.com/site/michinobumaeda/misc/unicodecodechars
-- (NSArray *)katakanaRangeArray {
-    CharMapping mapping_array[] = {
-        {0x30A1, 0x30F6}
-    };
-    return [self arrayRangeForCharMapping:mapping_array size:sizeof(mapping_array) / sizeof(mapping_array[0])];
-
-}
-
-- (NSArray *)hiraganaRangeArray {
-    CharMapping mapping_array[] = {
-        {0x3041, 0x3093},
-    };
-    return [self arrayRangeForCharMapping:mapping_array size:sizeof(mapping_array) / sizeof(mapping_array[0])];
-}
-
-#pragma mark -
-
-- (NSArray *)arrayRangeForCharMapping:(CharMapping *) mapping_array size:(int) size {
-    NSMutableArray *array = [NSMutableArray array];
-    for (int i = 0; i < size; i++) {
-        NSRange range = [self rangeForCharMapping:mapping_array[i]];
-        [array addObject:[NSValue valueWithRange:range]];
-    }
-    return array;
-}
-
-- (NSRange)rangeForCharMapping:(CharMapping) charMapping {
-    return [self rangeOfUniCharFrom:(UniChar)charMapping.fromChar toChar:(UniChar)charMapping.toChar];
-}
-
-- (NSRange)rangeOfUniCharFrom:(UniChar) formChar toChar:(UniChar) toChar {
-    return NSMakeRange(formChar, toChar - formChar);
-}
-
-- (UniChar)randomUniCharFromRange:(NSRange) uniCharRange {
-    return (UniChar)((arc4random() % uniCharRange.length) + uniCharRange.location);
-}
-
-- (NSString *)stringFromUniChar:(UniChar) uniChar {
+- (NSString *)stringFromIndex:(NSInteger)index {
+    UniChar uniChar = index + location;
     // FIXME: wrong???
     if (CFStringIsSurrogateHighCharacter(uniChar) ||
         CFStringIsSurrogateLowCharacter(uniChar)) {
@@ -103,5 +90,81 @@ typedef struct {
         return [NSString stringWithCharacters:(unichar[]){highSurrogate, lowSurrogate} length:2];
     }
     return [NSString stringWithCharacters:&uniChar length:1];
+}
+@end
+@interface SetString : RandString {
+    NSArray *words;
+}
+- (void)setWords:(NSArray *)w;
+@end
+@implementation SetString
+- (NSString *)nextString {
+    return [self stringFromIndex:arc4random_uniform(length)];
+}
+- (NSString *)stringFromIndex:(NSInteger)index {
+    for (RandString *rs in words) {
+        if (index < rs.length) {
+            return [rs stringFromIndex:index];
+        } else {
+            index -= rs.length;
+        }
+    }
+    return @"";
+}
+- (void)setWords:(NSArray *)w {
+    words = w;
+    length = [self sumLength:w];
+}
+- (NSInteger)sumLength:(NSArray *)w {
+    NSInteger l = 0;
+    for (RandString *rs in w) {
+        l += [rs length];
+    }
+    return l;
+}
+@end
+cWordStringInheritance(Hiragana, 0x3041, 0x3093)
+cWordStringInheritance(Katakana, 0x30A1, 0x30F6)
+cWordStringInheritance(Kanji1, 0x3220, 0x3244)
+cWordStringInheritance(Kanji2, 0x3280, 0x32B0)
+cWordStringInheritance(Kanji3, 0x3400, 0x9FFF)
+cWordStringInheritance(Kanji4, 0xF900, 0xFAFF)
+cWordStringInheritance(Kanji5, 0x20000, 0x2FFFF)
+
+@interface Japanese : SetString
+@end
+@implementation Japanese
+mSharedInstance
+- (id)init {
+    self = [super init];
+    if (self) {
+        [self setWords:@[
+         [Hiragana sharedInstance],
+         [Katakana sharedInstance],
+         [Kanji1 sharedInstance],
+         [Kanji2 sharedInstance],
+         [Kanji3 sharedInstance],
+         [Kanji4 sharedInstance],
+         [Kanji5 sharedInstance],
+        ]];
+    }
+    return self;
+}
+@end
+
+@implementation RandUniChar
+- (NSString *)randomStringInJapanese:(NSUInteger) length {
+    RandString *arrayRange = [Japanese sharedInstance];
+    // FIXME: Doesn't actually random
+    NSMutableString *results = [NSMutableString string];
+    for (NSUInteger i = 0; i < length; i++) {
+        NSString *s = [arrayRange nextString];
+        if (s.length == 1) {
+            [results appendString:s];
+        } else {
+            i--;
+        }
+    }
+    return results;
 }
 @end
