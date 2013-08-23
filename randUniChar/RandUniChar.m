@@ -8,26 +8,6 @@
 
 #import "RandUniChar.h"
 
-#define mSharedInstance + (instancetype)sharedInstance {\
-    static id _instance;\
-    static dispatch_once_t onceToken;\
-    dispatch_once(&onceToken, ^{\
-        _instance = [self new];\
-    });\
-    return _instance;\
-}
-#define cWordStringInheritance(name, from, to) @interface name : WordsString\
-@end\
-@implementation name \
-mSharedInstance\
-- (id)init {\
-    self = [super init];\
-    if (self) {\
-[self setRange:(CharMapping){from, to}];\
-}\
-return self;\
-}\
-@end
 
 typedef struct {
     const UTF32Char fromChar;
@@ -123,42 +103,75 @@ typedef struct {
     return l;
 }
 @end
+
+#define mSharedInstance + (instancetype)sharedInstance {\
+static id _instance;\
+static dispatch_once_t onceToken;\
+dispatch_once(&onceToken, ^{\
+_instance = [self new];\
+});\
+return _instance;\
+}
+#define cWordStringInheritance(name, from, to) @interface name : WordsString\
+@end\
+@implementation name \
+mSharedInstance\
+- (id)init {\
+self = [super init];\
+if (self) {\
+[self setRange:(CharMapping){from, to}];\
+}\
+return self;\
+}\
+@end
+
+#define cSetStringInheritance(name, ...) @interface name : SetString \
+@end \
+@implementation name \
+mSharedInstance \
+- (id)init {\
+self = [super init];\
+if (self) {\
+[self setWords:@[ __VA_ARGS__ ]];\
+}\
+return self;\
+}\
+@end
+
+cWordStringInheritance(CaptalAlphabet, 0x41, 0x5a)
+cWordStringInheritance(LowerCaseAlphabet, 0x61, 0x7a)
 cWordStringInheritance(Hiragana, 0x3041, 0x3093)
 cWordStringInheritance(Katakana, 0x30A1, 0x30F6)
+cWordStringInheritance(CommonKanji, 0x4E00, 0x9FA0)
 cWordStringInheritance(Kanji1, 0x3220, 0x3244)
 cWordStringInheritance(Kanji2, 0x3280, 0x32B0)
 cWordStringInheritance(Kanji3, 0x3400, 0x9FFF)
 cWordStringInheritance(Kanji4, 0xF900, 0xFAFF)
 cWordStringInheritance(Kanji5, 0x20000, 0x2FFFF)
 
-@interface Japanese : SetString
-@end
-@implementation Japanese
-mSharedInstance
-- (id)init {
-    self = [super init];
-    if (self) {
-        [self setWords:@[
-         [Hiragana sharedInstance],
-         [Katakana sharedInstance],
-         [Kanji1 sharedInstance],
-         [Kanji2 sharedInstance],
-         [Kanji3 sharedInstance],
-         [Kanji4 sharedInstance],
-         [Kanji5 sharedInstance],
-        ]];
-    }
-    return self;
-}
-@end
+cSetStringInheritance(Japanese,
+    [Hiragana sharedInstance],
+    [Katakana sharedInstance],
+    [CommonKanji sharedInstance],
+)
+
+cSetStringInheritance(Alphabet,
+    [CaptalAlphabet sharedInstance],
+    [LowerCaseAlphabet sharedInstance],
+)
 
 @implementation RandUniChar
+- (NSString *)randomStringInAlphabet:(NSUInteger)length {
+    return [self randomString:length instance:[Alphabet sharedInstance]];
+}
 - (NSString *)randomStringInJapanese:(NSUInteger) length {
-    RandString *arrayRange = [Japanese sharedInstance];
+    return [self randomString:length instance:[Japanese sharedInstance]];
+}
+- (NSString *)randomString:(NSUInteger)length instance:(RandString *)instance {
     // FIXME: Doesn't actually random
     NSMutableString *results = [NSMutableString string];
     for (NSUInteger i = 0; i < length; i++) {
-        NSString *s = [arrayRange nextString];
+        NSString *s = [instance nextString];
         if (s.length == 1) {
             [results appendString:s];
         } else {
@@ -166,5 +179,6 @@ mSharedInstance
         }
     }
     return results;
+
 }
 @end

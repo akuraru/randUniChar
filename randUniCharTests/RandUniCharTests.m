@@ -13,7 +13,6 @@
 - (NSArray *)hiraganaRangeArray;
 - (NSArray *)katakanaRangeArray;
 - (NSArray *)kanjiRangeArray;
-- (NSString *)stringFromUniChar:(UniChar)uniChar;
 @end
 
 @interface RandString : NSObject {
@@ -21,6 +20,7 @@
 }
 - (NSString *)nextString;
 + (instancetype)sharedInstance;
+- (NSString *)stringFromIndex:(NSInteger)index;
 @end
 @interface WordsString :RandString {
     NSUInteger location;
@@ -33,6 +33,11 @@
 @end
 @interface Kanji3 : WordsString
 @end
+@interface CaptalAlphabet : WordsString
+@end
+@interface LowerCaseAlphabet : WordsString
+@end
+
 
 @implementation RandUniCharTests {
     RandUniChar *randUniChar;
@@ -44,46 +49,83 @@
     randUniChar = [[RandUniChar alloc] init];
 }
 
-- (NSString *)firstString:(NSRange)range {
-    return [randUniChar stringFromUniChar:range.location];
+- (NSString *)firstString:(NSRange)range instance:(RandString *)instance {
+    return [instance stringFromIndex:0];
 }
-- (NSString *)lastString:(NSRange)range {
-    return [randUniChar stringFromUniChar:(range.location + range.length - 1)];
+- (NSString *)lastString:(NSRange)range instance:(RandString *)instance {
+    return [instance stringFromIndex:(range.length - 1)];
 }
 
-- (void)testExample {
-    for (NSUInteger i = 1; i < 50; i++) {
-        NSString *string = [randUniChar randomStringInJapanese:i];
-        NSLog(@"string = %@", string);
-        STAssertEquals(string.length, i, @"same length");
-    }
-}
+//- (void)testExample {
+//    for (NSUInteger i = 1; i < 50; i++) {
+//        NSString *string = [randUniChar randomStringInJapanese:i];
+//        printf("len : %d , string = %s\n",i , [string UTF8String]);
+//        STAssertEquals(string.length, i, @"same length");
+//    }
+//}
+//- (void)testAlphabet {
+//    for (NSUInteger i = 1; i < 50; i++) {
+//        NSString *string = [randUniChar randomStringInAlphabet:i];
+//        printf("len : %d , string = %s\n",i , [string UTF8String]);
+//        STAssertEquals(string.length, i, @"same length");
+//    }
+//}
 
 - (void)testFirstHiragana {
-    NSRange range = [[Hiragana sharedInstance] rangeValue];
-    NSString *result = [self firstString:range];
+    WordsString *instance = [Hiragana sharedInstance];
+    NSRange range = [instance rangeValue];
+    NSString *result = [self firstString:range instance:instance];
     STAssertEqualObjects(result, @"ぁ", @"first Hiragana");
 }
 - (void)testLastHiragana {
-    NSRange range = [[Hiragana sharedInstance] rangeValue];
-    NSString *result = [self lastString:range];
+    WordsString *instance = [Hiragana sharedInstance];
+    NSRange range = [instance rangeValue];
+    NSString *result = [self lastString:range instance:instance];
     STAssertEqualObjects(result, @"ん", @"last Hiragana");
 }
 - (void)testFirstKatakana {
-    NSRange range = [[Katakana sharedInstance] rangeValue];
-    NSString *result = [self firstString:range];
+    WordsString *instance = [Katakana sharedInstance];
+    NSRange range = [instance rangeValue];
+    NSString *result = [self firstString:range instance:instance];
     STAssertEqualObjects(result, @"ァ", @"first Katakana");
 }
 - (void)testLastKatakana {
-    NSRange range = [[Katakana sharedInstance] rangeValue];
-    NSString *result = [self lastString:range];
+    WordsString *instance = [Katakana sharedInstance];
+    NSRange range = [instance rangeValue];
+    NSString *result = [self lastString:range instance:instance];
     STAssertEqualObjects(result, @"ヶ", @"last Katakana");
 }
 //常用漢字
 - (void)testFirstKanji {
-    NSRange range = [[Kanji3 sharedInstance] rangeValue];
-    NSString *result = [self firstString:range];
+    WordsString *instance = [Kanji3 sharedInstance];
+    NSRange range = [instance rangeValue];
+    NSString *result = [self firstString:range instance:instance];
     STAssertEqualObjects(result, @"㐀", @"first Kanji");
+}
+
+- (void)testFirstCaptalAlphabet {
+    WordsString *instance = [CaptalAlphabet sharedInstance];
+    NSRange range = [instance rangeValue];
+    NSString *result = [self firstString:range instance:instance];
+    STAssertEqualObjects(result, @"A", @"first CaptalAlphabet");
+}
+- (void)testLastCaptalAlphabet {
+    WordsString *instance = [CaptalAlphabet sharedInstance];
+    NSRange range = [instance rangeValue];
+    NSString *result = [self lastString:range instance:instance];
+    STAssertEqualObjects(result, @"Z", @"last CaptalAlphabet");
+}
+- (void)testFirstLowerCaseAlphabet {
+    WordsString *instance = [LowerCaseAlphabet sharedInstance];
+    NSRange range = [instance rangeValue];
+    NSString *result = [self firstString:range instance:instance];
+    STAssertEqualObjects(result, @"a", @"first LowerCaseAlphabet");
+}
+- (void)testLastLowerCaseAlphabet {
+    WordsString *instance = [LowerCaseAlphabet sharedInstance];
+    NSRange range = [instance rangeValue];
+    NSString *result = [self lastString:range instance:instance];
+    STAssertEqualObjects(result, @"z", @"last LowerCaseAlphabet");
 }
 
 
